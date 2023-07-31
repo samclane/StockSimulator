@@ -29,6 +29,9 @@ let keySequence = [];
 let konamiCode = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
 let codeEntered = false;
 
+let xAdjustSmooth = 0;
+let yAdjustSmooth = 0;
+
 
 function preload() {
   dollarBillImage = loadImage('dollar_bill.png');
@@ -102,12 +105,16 @@ function drawGraph() {
   // Adjust the x position of all points so the latest point is at the center of the width
   let xAdjust = width / 2 - latestX;
 
+  // Gradually adjust the smooth camera positions towards the target positions
+  xAdjustSmooth += (xAdjust - xAdjustSmooth) * 0.05;
+  yAdjustSmooth += (yAdjust - yAdjustSmooth) * 0.05;
+
   // Draw the graph
   for (let i = 1; i < history.length; i++) {
-    let x = map(i, 0, history.length, 0, width) + xAdjust;
-    let y = map(history[i], 0, 200, height, 0) + yAdjust;
-    let prevX = map(i - 1, 0, history.length, 0, width) + xAdjust;
-    let prevY = map(history[i - 1], 0, 200, height, 0) + yAdjust;
+    let x = map(i, 0, history.length, 0, width) + xAdjustSmooth;
+    let y = map(history[i], 0, 200, height, 0) + yAdjustSmooth;
+    let prevX = map(i - 1, 0, history.length, 0, width) + xAdjustSmooth;
+    let prevY = map(history[i - 1], 0, 200, height, 0) + yAdjustSmooth;
 
     // Check if the stock price is going up or down and change the stroke color accordingly
     if (history[i] > history[i - 1]) {
@@ -135,10 +142,10 @@ function drawGraph() {
   // Draw the SMA line
   stroke('blue');
   for (let i = 1; i < smaValues.length; i++) {
-    let x = map(i + history.length - smaValues.length, 0, history.length, 0, width) + xAdjust;
-    let y = map(smaValues[i], 0, 200, height, 0) + yAdjust;
-    let prevX = map(i - 1 + history.length - smaValues.length, 0, history.length, 0, width) + xAdjust;
-    let prevY = map(smaValues[i - 1], 0, 200, height, 0) + yAdjust;
+    let x = map(i + history.length - smaValues.length, 0, history.length, 0, width) + xAdjustSmooth;
+    let y = map(smaValues[i], 0, 200, height, 0) + yAdjustSmooth;
+    let prevX = map(i - 1 + history.length - smaValues.length, 0, history.length, 0, width) + xAdjustSmooth;
+    let prevY = map(smaValues[i - 1], 0, 200, height, 0) + yAdjustSmooth;
     line(prevX, prevY, x, y);
   }
   
@@ -163,10 +170,10 @@ function drawGraph() {
   // Draw the EMA line
   stroke('purple');
   for (let i = 1; i < emaValues.length; i++) {
-    let x = map(i, 0, history.length, 0, width) + xAdjust;
-    let y = map(emaValues[i], 0, 200, height, 0) + yAdjust;
-    let prevX = map(i - 1, 0, history.length, 0, width) + xAdjust;
-    let prevY = map(emaValues[i - 1], 0, 200, height, 0) + yAdjust;
+    let x = map(i, 0, history.length, 0, width) + xAdjustSmooth;
+    let y = map(emaValues[i], 0, 200, height, 0) + yAdjustSmooth;
+    let prevX = map(i - 1, 0, history.length, 0, width) + xAdjustSmooth;
+    let prevY = map(emaValues[i - 1], 0, 200, height, 0) + yAdjustSmooth;
     line(prevX, prevY, x, y);
   }
 
