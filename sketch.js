@@ -286,7 +286,7 @@ class DollarBill {
 
 function updateAndDrawDollarBills() {
   // Add a new dollar bill every 30 frames
-  if (frameCount % 30 == 0) {
+  if (frameCount % 30 == 0 && (random() * playerMoney) > 500) {
     dollarBills.push(new DollarBill());
   }
 
