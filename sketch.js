@@ -257,24 +257,6 @@ function payDividends() {
   }
 }
 
-
-function updateAndDrawDollarBills() {
-  // Add a new dollar bill every 30 frames
-  if (frameCount % 30 == 0) {
-    dollarBills.push(new DollarBill());
-  }
-
-  // Update and draw each dollar bill
-  for (let i = dollarBills.length - 1; i >= 0; i--) {
-    dollarBills[i].update();
-    dollarBills[i].draw();
-    // Remove the dollar bill if it"s off the screen
-    if (dollarBills[i].y > height) {
-      dollarBills.splice(i, 1);
-    }
-  }
-}
-
 function drawLegend() {
   fill(0);
   textSize(16);
