@@ -12,7 +12,8 @@ let priceLimit = 0.05; // Limit on price change per update
 let eventRate = 0.01; // Chance of a market event per update
 let eventImpact = 0.2; // Impact of a market event on price
 
-let marketMood = 0; // The general mood of the market, which can affect the stock price
+// The general mood of the market, which can affect the stock price
+let marketMood = 0;
 let marketMoodVolatility = 0.001; // The volatility of the market mood
 
 
@@ -26,15 +27,25 @@ let emaDays = 100;
 let emaValues = [];
 
 let keySequence = [];
-let konamiCode = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
+let konamiCode = [
+  "ArrowUp",
+  "ArrowUp",
+  "ArrowDown",
+  "ArrowDown",
+  "ArrowLeft",
+  "ArrowRight",
+  "ArrowLeft",
+  "ArrowRight",
+  "b",
+  "a"
+];
 let codeEntered = false;
 
 let xAdjustSmooth = 0;
 let yAdjustSmooth = 0;
 
-
 function preload() {
-  dollarBillImage = loadImage('dollar_bill.png');
+  dollarBillImage = loadImage("dollar_bill.png");
 }
 
 
@@ -43,12 +54,12 @@ function setup() {
   stockPrice = 100; // Start the stock price at $100
 
   // Create an "invest" button
-  let investButton = createButton('Invest');
+  let investButton = createButton("Invest");
   investButton.position(10, 10);
   investButton.mousePressed(invest);
 
   // Create a "Sell" button
-  let sellButton = createButton('Sell');
+  let sellButton = createButton("Sell");
   sellButton.position(60, 10);
   sellButton.mousePressed(sell);
 }
@@ -75,10 +86,15 @@ function updateStock() {
     marketMood = 0.25;
   }
 
-  let changePercent = constrain(drift / 252 + randomGaussian() * volatility, -priceLimit, priceLimit);
+  let changePercent = constrain(
+    drift / 252 + randomGaussian() * volatility,
+    -priceLimit,
+    priceLimit
+  );
 
   // Modify the change percent based on the market mood
-  changePercent += marketMood * 0.01; // The market mood has a 1% influence on the change percent
+  // The market mood has a 1% influence on the change percent
+  changePercent += marketMood * 0.01;
 
   if (random() < eventRate) {
     changePercent += random(-1, 1) * eventImpact;
@@ -94,13 +110,15 @@ function drawGraph() {
   // Calculate the y position of the latest stock price
   let latestY = map(history[history.length - 1], 0, 200, height, 0);
 
-  // Adjust the y position of all points so the latest point is at 3/4 of the height
+  // Adjust the y position of all points so the latest point is at 3/4
+  // of the height
   let yAdjust = height * 3 / 4 - latestY;
 
   // Calculate the x position of the latest stock price
   let latestX = map(history.length - 1, 0, history.length, 0, width);
 
-  // Adjust the x position of all points so the latest point is at the center of the width
+  // Adjust the x position of all points so the latest point is at the
+  // center of the width
   let xAdjust = width / 2 - latestX;
 
   // Gradually adjust the smooth camera positions towards the target positions
@@ -114,11 +132,12 @@ function drawGraph() {
     let prevX = map(i - 1, 0, history.length, 0, width) + xAdjustSmooth;
     let prevY = map(history[i - 1], 0, 200, height, 0) + yAdjustSmooth;
 
-    // Check if the stock price is going up or down and change the stroke color accordingly
+    // Check if the stock price is going up or down and change the
+    // stroke color accordingly
     if (history[i] > history[i - 1]) {
-      stroke('green');
+      stroke("green");
     } else {
-      stroke('red');
+      stroke("red");
     }
 
     line(prevX, prevY, x, y);
@@ -138,11 +157,23 @@ function drawGraph() {
   }
 
   // Draw the SMA line
-  stroke('blue');
+  stroke("blue");
   for (let i = 1; i < smaValues.length; i++) {
-    let x = map(i + history.length - smaValues.length, 0, history.length, 0, width) + xAdjustSmooth;
+    let x = map(
+      i + history.length - smaValues.length,
+      0,
+      history.length,
+      0,
+      width
+    ) + xAdjustSmooth;
     let y = map(smaValues[i], 0, 200, height, 0) + yAdjustSmooth;
-    let prevX = map(i - 1 + history.length - smaValues.length, 0, history.length, 0, width) + xAdjustSmooth;
+    let prevX = map(
+      i - 1 + history.length - smaValues.length,
+      0,
+      history.length,
+      0,
+      width
+    ) + xAdjustSmooth;
     let prevY = map(smaValues[i - 1], 0, 200, height, 0) + yAdjustSmooth;
     line(prevX, prevY, x, y);
   }
@@ -166,7 +197,7 @@ function drawGraph() {
   }
 
   // Draw the EMA line
-  stroke('purple');
+  stroke("purple");
   for (let i = 1; i < emaValues.length; i++) {
     let x = map(i, 0, history.length, 0, width) + xAdjustSmooth;
     let y = map(emaValues[i], 0, 200, height, 0) + yAdjustSmooth;
@@ -194,14 +225,14 @@ function drawGraph() {
 function displayPrice() {
   fill(0);
   textSize(16);
-  text('Stock Price: $' + stockPrice.toFixed(2), 10, height - 60);
+  text("Stock Price: $" + stockPrice.toFixed(2), 10, height - 60);
 }
 
 function displayPlayerMoney() {
   fill(0);
   textSize(16);
-  text('Player Money: $' + playerMoney.toFixed(2), 10, height - 40);
-  text('Stocks Owned: ' + stocksOwned, 10, height - 20);
+  text("Player Money: $" + playerMoney.toFixed(2), 10, height - 40);
+  text("Stocks Owned: " + stocksOwned, 10, height - 20);
 }
 
 function invest() {
@@ -237,7 +268,7 @@ function updateAndDrawDollarBills() {
   for (let i = dollarBills.length - 1; i >= 0; i--) {
     dollarBills[i].update();
     dollarBills[i].draw();
-    // Remove the dollar bill if it's off the screen
+    // Remove the dollar bill if it"s off the screen
     if (dollarBills[i].y > height) {
       dollarBills.splice(i, 1);
     }
@@ -249,22 +280,22 @@ function drawLegend() {
   textSize(16);
 
   // Draw the Stock price legend
-  stroke('red');
+  stroke("red");
   line(10, 50, 40, 50);
   noStroke();
-  text('Stock Price', 50, 55);
+  text("Stock Price", 50, 55);
 
   // Draw the SMA legend
-  stroke('blue');
+  stroke("blue");
   line(10, 70, 40, 70);
   noStroke();
-  text('SMA', 50, 75);
+  text("SMA", 50, 75);
 
   // Draw the EMA legend
-  stroke('purple');
+  stroke("purple");
   line(10, 90, 40, 90);
   noStroke();
-  text('EMA', 50, 95);
+  text("EMA", 50, 95);
 
   noStroke();
 }
@@ -277,7 +308,8 @@ class DollarBill {
   constructor() {
     this.x = random(width);
     this.y = -dollarBillImage.height;
-    this.speed = map(playerMoney, 0, 10000, 1, 5); // Speed is based on player's money
+    // Speed is based on player"s money
+    this.speed = map(playerMoney, 0, 10000, 1, 5);
   }
 
   update() {
@@ -299,7 +331,7 @@ function updateAndDrawDollarBills() {
   for (let i = dollarBills.length - 1; i >= 0; i--) {
     dollarBills[i].update();
     dollarBills[i].draw();
-    // Remove the dollar bill if it's off the screen
+    // Remove the dollar bill if it"s off the screen
     if (dollarBills[i].y > height) {
       dollarBills.splice(i, 1);
     }
