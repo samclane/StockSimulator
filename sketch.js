@@ -41,13 +41,13 @@ function preload() {
 function setup() {
   createCanvas(windowWidth, windowHeight);
   stockPrice = 100; // Start the stock price at $100
-  
-    // Create an "invest" button
+
+  // Create an "invest" button
   let investButton = createButton('Invest');
   investButton.position(10, 10);
   investButton.mousePressed(invest);
-  
-    // Create a "Sell" button
+
+  // Create a "Sell" button
   let sellButton = createButton('Sell');
   sellButton.position(60, 10);
   sellButton.mousePressed(sell);
@@ -55,7 +55,7 @@ function setup() {
 
 function draw() {
   background(220);
-  updateAndDrawDollarBills();  
+  updateAndDrawDollarBills();
   updateStock();
   payDividends();
   drawGraph();
@@ -67,16 +67,16 @@ function draw() {
 function updateStock() {
   // Update the market mood with some randomness
   marketMood += random(-marketMoodVolatility, marketMoodVolatility);
-  
+
   // Limit the market mood to the range [-1, 1]
   marketMood = constrain(marketMood, -1, 1);
-  
+
   if (codeEntered) {
     marketMood = 0.25;
   }
 
-  let changePercent = constrain(drift/252 + randomGaussian() * volatility, -priceLimit, priceLimit);
-  
+  let changePercent = constrain(drift / 252 + randomGaussian() * volatility, -priceLimit, priceLimit);
+
   // Modify the change percent based on the market mood
   changePercent += marketMood * 0.01; // The market mood has a 1% influence on the change percent
 
@@ -89,8 +89,6 @@ function updateStock() {
 
   history.push(stockPrice);
 }
-
-
 
 function drawGraph() {
   // Calculate the y position of the latest stock price
@@ -122,14 +120,14 @@ function drawGraph() {
     } else {
       stroke('red');
     }
-    
+
     line(prevX, prevY, x, y);
   }
 
   // Reset the stroke color
   stroke(0);
-  
-   // Calculate the SMA and add it to the smaValues array
+
+  // Calculate the SMA and add it to the smaValues array
   if (history.length >= smaDays) {
     let smaSum = 0;
     for (let i = 0; i < smaDays; i++) {
@@ -148,8 +146,8 @@ function drawGraph() {
     let prevY = map(smaValues[i - 1], 0, 200, height, 0) + yAdjustSmooth;
     line(prevX, prevY, x, y);
   }
-  
-    // Calculate the EMA and add it to the emaValues array
+
+  // Calculate the EMA and add it to the emaValues array
   emaValues = [];
   let k = 2 / (emaDays + 1); // smoothing constant
   for (let i = 0; i < history.length; i++) {
@@ -185,10 +183,10 @@ function drawGraph() {
     history.splice(0, 1);
   }
   if (smaValues.length > 2 * width) {
-    smaValues.splice(0,1);
+    smaValues.splice(0, 1);
   }
   if (emaValues.length > 2 * width) {
-    emaValues.splice(0,1);
+    emaValues.splice(0, 1);
   }
 }
 
@@ -249,25 +247,25 @@ function updateAndDrawDollarBills() {
 function drawLegend() {
   fill(0);
   textSize(16);
-  
+
   // Draw the Stock price legend
   stroke('red');
   line(10, 50, 40, 50);
   noStroke();
   text('Stock Price', 50, 55);
-  
+
   // Draw the SMA legend
   stroke('blue');
   line(10, 70, 40, 70);
   noStroke();
   text('SMA', 50, 75);
-  
+
   // Draw the EMA legend
   stroke('purple');
   line(10, 90, 40, 90);
   noStroke();
   text('EMA', 50, 95);
-  
+
   noStroke();
 }
 
@@ -310,11 +308,11 @@ function updateAndDrawDollarBills() {
 
 function keyPressed() {
   keySequence.push(key);
-  
+
   if (keySequence.length > konamiCode.length) {
     keySequence.shift();
   }
-  
+
   if (JSON.stringify(keySequence) === JSON.stringify(konamiCode)) {
     codeEntered = true;
     console.log("line go up");
