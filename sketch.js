@@ -44,6 +44,28 @@ let codeEntered = false;
 let xAdjustSmooth = 0;
 let yAdjustSmooth = 0;
 
+class GameEvent {
+  constructor(callback, start, duration) {
+    this.startTime = start;
+    this.callback = callback;
+    this.endTime = millis() + duration;
+    this.yPosition = -30;
+    this.alphaValue = 255;
+  }
+
+  execute() {
+    if (this.callback) {
+      this.callback(this);
+    }
+  }
+
+  isRunning() {
+    return (millis() < this.endTime) && (millis() > this.startTime);
+  }
+}
+
+let events = [];
+
 function preload() {
   dollarBillImage = loadImage("dollar_bill.png");
 }
@@ -64,11 +86,13 @@ function setup() {
     sellButton.position(160, 80 + yPosition);
     sellButton.mousePressed(() => sell(i));
   }
+
+  scheduleEvent(() => showMessage(events[0], "Welcome to the stock market!"), 2000, 2000 + 2500);
+  scheduleEvent(() => showMessage(events[1], "You sure like playing!"), 100000, 100000 + 2500);
 }
 
 function draw() {
   background(220);
-  showMessage("Welcome to the Stock Market Game!");
   updateAndDrawDollarBills();
   for (let i = 0; i < N; i++) {
     updateStock(i);
@@ -80,6 +104,7 @@ function draw() {
   }
   displayPlayerMoney();
   drawLegend();
+  updateEvents();
 }
 
 function updateStock(stockIndex) {
@@ -262,24 +287,36 @@ function keyPressed() {
   }
 }
 
-function showMessage(message) {
+function showMessage(event, message) {
   push();
-  if (typeof yPosition === 'undefined') {
-    yPosition = -30;
-  }
-  
-  if (typeof alphaValue === 'undefined') {
-    alphaValue = 255;
-  }
-  fill(0, alphaValue);
+
+  fill(0, event.alphaValue);
   textSize(24);
   textAlign(CENTER, CENTER);
-  text(message, width/2, yPosition);
-  
-  if (yPosition < height/2) {
-    yPosition += 5;
-  } else if (alphaValue > 0) {
-    alphaValue -= 5;
+  text(message, width / 2, event.yPosition);
+
+  if (event.yPosition < height / 2) {
+    event.yPosition += 5;
+  } else if (event.alphaValue > 0) {
+    event.alphaValue -= 5;
+  }
+
+  if (event.yPosition >= height / 2 && event.alphaValue <= 0) {
+    event.yPosition = -30;
+    event.alphaValue = 255;
   }
   pop();
+}
+
+function scheduleEvent(callback, start, duration) {
+  console.log("scheduling event at " + start + " for " + duration + " ms");
+  events.push(new GameEvent(callback, start, duration));
+}
+
+function updateEvents() {
+  for (let i = events.length - 1; i >= 0; i--) {
+    if (events[i] && events[i].isRunning()) {
+      events[i].callback();
+    }
+  }
 }
