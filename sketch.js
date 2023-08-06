@@ -68,6 +68,7 @@ function setup() {
 
 function draw() {
   background(220);
+  showMessage("Welcome to the Stock Market Game!");
   updateAndDrawDollarBills();
   for (let i = 0; i < N; i++) {
     updateStock(i);
@@ -259,4 +260,26 @@ function keyPressed() {
     codeEntered = true;
     console.log("line go up");
   }
+}
+
+function showMessage(message) {
+  push();
+  if (typeof yPosition === 'undefined') {
+    yPosition = -30;
+  }
+  
+  if (typeof alphaValue === 'undefined') {
+    alphaValue = 255;
+  }
+  fill(0, alphaValue);
+  textSize(24);
+  textAlign(CENTER, CENTER);
+  text(message, width/2, yPosition);
+  
+  if (yPosition < height/2) {
+    yPosition += 5;
+  } else if (alphaValue > 0) {
+    alphaValue -= 5;
+  }
+  pop();
 }
