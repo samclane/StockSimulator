@@ -1,30 +1,29 @@
-let stockPrice;
-let history = [];
-
-let drift = 0.001; // Average rate of return
-let volatility = 0.01; // Standard deviation of returns
+let N = 5;  // Number of stocks
+let stocks = Array.from({ length: N }, () => {
+  return {
+    stockPrice: 100,  // Starting price
+    history: [],
+    stocksOwned: 0
+  }
+});
 
 let playerMoney = 1000;
-let stocksOwned = 0;
-
-let dividendRate = 0.01; // Dividend rate
-let priceLimit = 0.05; // Limit on price change per update
-let eventRate = 0.01; // Chance of a market event per update
-let eventImpact = 0.2; // Impact of a market event on price
-
-// The general mood of the market, which can affect the stock price
+let drift = 0.001;
+let volatility = 0.01;
+let dividendRate = 0.01;
+let priceLimit = 0.05;
+let eventRate = 0.01;
+let eventImpact = 0.2;
 let marketMood = 0;
-let marketMoodVolatility = 0.001; // The volatility of the market mood
-
+let marketMoodVolatility = 0.001;
 
 let dollarBills = [];
 let dollarBillImage;
 
 let smaDays = 100;
-let smaValues = [];
-
+let smaValues = Array.from({ length: N }, () => []);
 let emaDays = 100;
-let emaValues = [];
+let emaValues = Array.from({ length: N }, () => []);
 
 let keySequence = [];
 let konamiCode = [
@@ -48,214 +47,137 @@ function preload() {
   dollarBillImage = loadImage("dollar_bill.png");
 }
 
-
 function setup() {
   createCanvas(windowWidth, windowHeight);
-  stockPrice = 100; // Start the stock price at $100
+  for (let stock of stocks) {
+    stock.stockPrice = 100;  // Reset the stock price
+  }
 
-  // Create an "invest" button
-  let investButton = createButton("Invest");
-  investButton.position(10, 10);
-  investButton.mousePressed(invest);
+  for (let i = 0; i < N; i++) {
+    let yPosition = i * 30;
+    let investButton = createButton(`Invest in Stock ${i + 1}`);
+    investButton.position(10, 80 + yPosition);
+    investButton.mousePressed(() => invest(i));
 
-  // Create a "Sell" button
-  let sellButton = createButton("Sell");
-  sellButton.position(60, 10);
-  sellButton.mousePressed(sell);
+    let sellButton = createButton(`Sell Stock ${i + 1}`);
+    sellButton.position(160, 80 + yPosition);
+    sellButton.mousePressed(() => sell(i));
+  }
 }
 
 function draw() {
   background(220);
   updateAndDrawDollarBills();
-  updateStock();
-  payDividends();
+  for (let i = 0; i < N; i++) {
+    updateStock(i);
+    payDividends(i);
+  }
   drawGraph();
-  displayPrice();
+  for (let i = 0; i < N; i++) {
+    displayPrice(i);
+  }
   displayPlayerMoney();
   drawLegend();
 }
 
-function updateStock() {
-  // Update the market mood with some randomness
+function updateStock(stockIndex) {
+  let stock = stocks[stockIndex];
   marketMood += random(-marketMoodVolatility, marketMoodVolatility);
-
-  // Limit the market mood to the range [-1, 1]
   marketMood = constrain(marketMood, -1, 1);
-
   if (codeEntered) {
     marketMood = 0.25;
   }
-
   let changePercent = constrain(
     drift / 252 + randomGaussian() * volatility,
     -priceLimit,
     priceLimit
   );
-
-  // Modify the change percent based on the market mood
-  // The market mood has a 1% influence on the change percent
   changePercent += marketMood * 0.01;
 
   if (random() < eventRate) {
     changePercent += random(-1, 1) * eventImpact;
   }
 
-  let newLogPrice = log(stockPrice) + changePercent;
-  stockPrice = exp(newLogPrice);
+  let newLogPrice = log(stock.stockPrice) + changePercent;
+  stock.stockPrice = exp(newLogPrice);
 
-  history.push(stockPrice);
+  stock.history.push(stock.stockPrice);
 }
+
 
 function drawGraph() {
-  // Calculate the y position of the latest stock price
-  let latestY = map(history[history.length - 1], 0, 200, height, 0);
+  // Iterate through each stock and draw its graph
+  for (let i = 0; i < N; i++) {
+    let stock = stocks[i];
+    let latestY = map(stock.history[stock.history.length - 1], 0, 200, height, 0);
+    let yAdjust = height * 3 / 4 - latestY;
+    let latestX = map(stock.history.length - 1, 0, stock.history.length, 0, width);
+    let xAdjust = width / 2 - latestX;
+    xAdjustSmooth += (xAdjust - xAdjustSmooth) * 0.05;
+    yAdjustSmooth += (yAdjust - yAdjustSmooth) * 0.05;
 
-  // Adjust the y position of all points so the latest point is at 3/4
-  // of the height
-  let yAdjust = height * 3 / 4 - latestY;
+    for (let j = 1; j < stock.history.length; j++) {
+      let x = map(j, 0, stock.history.length, 0, width) + xAdjustSmooth;
+      let y = map(stock.history[j], 0, 200, height, 0) + yAdjustSmooth;
+      let prevX = map(j - 1, 0, stock.history.length, 0, width) + xAdjustSmooth;
+      let prevY = map(stock.history[j - 1], 0, 200, height, 0) + yAdjustSmooth;
 
-  // Calculate the x position of the latest stock price
-  let latestX = map(history.length - 1, 0, history.length, 0, width);
-
-  // Adjust the x position of all points so the latest point is at the
-  // center of the width
-  let xAdjust = width / 2 - latestX;
-
-  // Gradually adjust the smooth camera positions towards the target positions
-  xAdjustSmooth += (xAdjust - xAdjustSmooth) * 0.05;
-  yAdjustSmooth += (yAdjust - yAdjustSmooth) * 0.05;
-
-  // Draw the graph
-  for (let i = 1; i < history.length; i++) {
-    let x = map(i, 0, history.length, 0, width) + xAdjustSmooth;
-    let y = map(history[i], 0, 200, height, 0) + yAdjustSmooth;
-    let prevX = map(i - 1, 0, history.length, 0, width) + xAdjustSmooth;
-    let prevY = map(history[i - 1], 0, 200, height, 0) + yAdjustSmooth;
-
-    // Check if the stock price is going up or down and change the
-    // stroke color accordingly
-    if (history[i] > history[i - 1]) {
-      stroke("green");
-    } else {
-      stroke("red");
-    }
-
-    line(prevX, prevY, x, y);
-  }
-
-  // Reset the stroke color
-  stroke(0);
-
-  // Calculate the SMA and add it to the smaValues array
-  if (history.length >= smaDays) {
-    let smaSum = 0;
-    for (let i = 0; i < smaDays; i++) {
-      smaSum += history[history.length - 1 - i];
-    }
-    let sma = smaSum / smaDays;
-    smaValues.push(sma);
-  }
-
-  // Draw the SMA line
-  stroke("blue");
-  for (let i = 1; i < smaValues.length; i++) {
-    let x = map(
-      i + history.length - smaValues.length,
-      0,
-      history.length,
-      0,
-      width
-    ) + xAdjustSmooth;
-    let y = map(smaValues[i], 0, 200, height, 0) + yAdjustSmooth;
-    let prevX = map(
-      i - 1 + history.length - smaValues.length,
-      0,
-      history.length,
-      0,
-      width
-    ) + xAdjustSmooth;
-    let prevY = map(smaValues[i - 1], 0, 200, height, 0) + yAdjustSmooth;
-    line(prevX, prevY, x, y);
-  }
-
-  // Calculate the EMA and add it to the emaValues array
-  emaValues = [];
-  let k = 2 / (emaDays + 1); // smoothing constant
-  for (let i = 0; i < history.length; i++) {
-    if (i < emaDays) {
-      // Calculate the SMA for the first emaDays prices to initialize the EMA
-      let smaSum = 0;
-      for (let j = 0; j <= i; j++) {
-        smaSum += history[j];
+      if (stock.history[j] > stock.history[j - 1]) {
+        stroke("green");
+      } else {
+        stroke("red");
       }
-      emaValues.push(smaSum / (i + 1));
-    } else {
-      // Calculate the EMA for each subsequent price
-      let ema = (history[i] - emaValues[i - 1]) * k + emaValues[i - 1];
-      emaValues.push(ema);
+      line(prevX, prevY, x, y);
     }
-  }
 
-  // Draw the EMA line
-  stroke("purple");
-  for (let i = 1; i < emaValues.length; i++) {
-    let x = map(i, 0, history.length, 0, width) + xAdjustSmooth;
-    let y = map(emaValues[i], 0, 200, height, 0) + yAdjustSmooth;
-    let prevX = map(i - 1, 0, history.length, 0, width) + xAdjustSmooth;
-    let prevY = map(emaValues[i - 1], 0, 200, height, 0) + yAdjustSmooth;
-    line(prevX, prevY, x, y);
+    // Draw stock number near the latest point
+    stroke(0);
+    fill(0);
+    textSize(12);
+    text(`Stock ${i + 1}`, latestX + xAdjustSmooth + 5, latestY + yAdjustSmooth);
   }
-
-  // Reset the stroke color
   stroke(0);
-
-  // Remove the oldest price if the history gets too long
-  if (history.length > 2 * width) {
-    history.splice(0, 1);
-  }
-  if (smaValues.length > 2 * width) {
-    smaValues.splice(0, 1);
-  }
-  if (emaValues.length > 2 * width) {
-    emaValues.splice(0, 1);
-  }
 }
 
 
-function displayPrice() {
+function displayPrice(stockIndex) {
+  let yPosition = stockIndex * 20;
   fill(0);
   textSize(16);
-  text("Stock Price: $" + stockPrice.toFixed(2), 10, height - 60);
+  text(`Stock ${stockIndex + 1} Price: $${stocks[stockIndex].stockPrice.toFixed(2)}`, 10, height - 160 + yPosition);
 }
 
 function displayPlayerMoney() {
   fill(0);
   textSize(16);
-  text("Player Money: $" + playerMoney.toFixed(2), 10, height - 40);
-  text("Stocks Owned: " + stocksOwned, 10, height - 20);
+  text(`Player Money: $${playerMoney.toFixed(2)}`, 10, height - 20);
 }
 
-function invest() {
-  if (playerMoney >= stockPrice) {
-    playerMoney -= stockPrice;
-    stocksOwned += 1;
-    stockPrice *= 1.01; // Increase the stock price by 1%
+function invest(stockIndex) {
+  let stock = stocks[stockIndex];
+  if (playerMoney >= stock.stockPrice) {
+    playerMoney -= stock.stockPrice;
+    stock.stocksOwned += 1;
+    stock.stockPrice *= 1.01;
   }
 }
 
-function sell() {
-  if (stocksOwned > 0) {
-    playerMoney += stockPrice;
-    stocksOwned -= 1;
-    stockPrice *= 0.99; // Decrease the stock price by 1%
+function sell(stockIndex) {
+  let stock = stocks[stockIndex];
+  if (stock.stocksOwned > 0) {
+    playerMoney += stock.stockPrice;
+    stock.stocksOwned -= 1;
+    stock.stockPrice *= 0.99;
   }
 }
 
-function payDividends() {
+function payDividends(stockIndex) {
+  let stock = stocks[stockIndex];
   if (frameCount % 60 == 0) {
-    playerMoney += stocksOwned * stockPrice * dividendRate;
+    playerMoney += stock.stocksOwned * stock.stockPrice * dividendRate;
   }
 }
+
 
 function drawLegend() {
   fill(0);
@@ -263,21 +185,21 @@ function drawLegend() {
 
   // Draw the Stock price legend
   stroke("red");
-  line(10, 50, 40, 50);
+  line(10, 20, 40, 20);
   noStroke();
-  text("Stock Price", 50, 55);
+  text("Stock Price", 50, 25);
 
   // Draw the SMA legend
   stroke("blue");
-  line(10, 70, 40, 70);
+  line(10, 40, 40, 40);
   noStroke();
-  text("SMA", 50, 75);
+  text("SMA", 50, 45);
 
   // Draw the EMA legend
   stroke("purple");
-  line(10, 90, 40, 90);
+  line(10, 60, 40, 60);
   noStroke();
-  text("EMA", 50, 95);
+  text("EMA", 50, 65);
 
   noStroke();
 }
