@@ -7,6 +7,7 @@ let stocks = Array.from({ length: N }, () => {
   }
 });
 
+let maxLength = 1000;  // Max number of points to keep in the graph
 let playerMoney = 1000;
 let drift = 0.001;
 let volatility = 0.01;
@@ -135,6 +136,11 @@ function drawGraph() {
     fill(0);
     textSize(12);
     text(`Stock ${i + 1}`, latestX + xAdjustSmooth + 5, latestY + yAdjustSmooth);
+
+    // Remove the oldest price if we have more than N points
+    if (stock.history.length > maxLength) {
+      stock.history.shift();
+    }
   }
   stroke(0);
 }
